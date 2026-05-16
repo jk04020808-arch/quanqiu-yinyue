@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Beats 3D | 资深前端作品集</title>
+    <style>
+        /* ================= 全局变量与重置 ================= */
+        :root {
+            --bg-color: #1a1816;
+            --text-main: #e8e6e3;
+            --text-muted: #8b8782;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-glow: rgba(255, 255, 255, 0.02);
+            --accent-cyan: #00d2ff;
+            --accent-purple: #7a5af5;
+            --success-green: #10b981;
+            --danger-red: #ef4444;
+            --font-stack: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-stack);
+            font-weight: 300;
+            letter-spacing: 0.05em;
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* 背景装饰 */
+        .bg-glow {
+            position: fixed;
+            width: 60vw;
+            height: 60vw;
+            background: radial-gradient(circle, rgba(122,90,245,0.05) 0%, rgba(26,24,22,0) 70%);
+            top: -20vh;
+            right: -20vw;
+            z-index: -1;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        /* ================= 动画定义 ================= */
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes spin-y { 100% { transform: rotateY(360deg); } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes pulse-glow { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+        @keyframes eq-play { 0% { height: 2px; } 50% { height: 15px; } 100% { height: 2px; } }
+        
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ================= 布局组件 ================= */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        /* ================= Hero 区域 ================= */
+        .hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero h1 {
+            font-size: clamp(3rem, 8vw, 6rem);
+            font-weight: 200;
+            letter-spacing: 0.1em;
+            margin-bottom: 16px;
+            background: linear-gradient(to right, var(--text-main), var(--text-muted));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: clamp(1rem, 2vw, 1.25rem);
+            color: var(--text-muted);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+
+        .hero-globe {
+            width: 300px;
+            height: 300px;
+            margin-bottom: 40px;
+            position: relative;
+            transform-style: preserve-3d;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .hero-globe svg {
+            width: 100%;
+            height: 100%;
+            stroke: var(--glass-border);
+            fill: none;
+            stroke-width: 1;
+        }
+        
+        .hero-globe .spin-group {
+            transform-origin: center;
+            animation: spin 20s linear infinite;
+        }
+
+        /* ================= 叙事步骤区 (用户流程) ================= */
+        .step-section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 80px 0;
+        }
+
+        .step-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+            width: 100%;
+        }
+
+        .step-text h2 {
+            font-size: 0.8rem;
+            color: var(--accent-purple);
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .step-text h2::before {
+            content: '';
+            display: block;
+            width: 30px;
+            height: 1px;
+            background: var(--accent-purple);
+        }
+
+        .step-text h3 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            margin-bottom: 24px;
+        }
+
+        .step-text p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        /* 抽象 UI 容器 */
+        .ui-canvas {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* UI 元素抽象 - 地球基础 */
+        .abs-globe {
+            width: 60%;
+            height: 60%;
+            border-radius: 50%;
+            border: 1px solid var(--glass-border);
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.05), transparent);
+            position: absolute;
+        }
+
+        /* 步骤 1: 引导层 */
+        .ui-step-1 .guide-overlay {
+            position: absolute;
+            width: 80%;
+            padding: 24px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            z-index: 10;
+        }
+
+        /* 步骤 2: 右侧面板 */
+        .ui-step-2 .abs-globe { left: -20%; }
+        .ui-step-2 .side-panel {
+            position: absolute;
+            right: 5%;
+            top: 10%;
+            bottom: 10%;
+            width: 45%;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .ui-list-item {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            background: rgba(255,255,255,0.02);
+            padding: 8px;
+            border-radius: 8px;
+        }
+        .ui-cover { width: 32px; height: 32px; background: var(--glass-border); border-radius: 4px; }
+        .ui-lines { flex: 1; }
+        .ui-line { height: 4px; background: var(--glass-border); margin-bottom: 6px; border-radius: 2px; }
+        .ui-line.short { width: 60%; }
+        .ui-donut {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: conic-gradient(var(--accent-purple) 0% 40%, var(--accent-cyan) 40% 75%, var(--glass-border) 75% 100%);
+            margin: auto;
+            position: relative;
+        }
+        .ui-donut::after {
+            content: ''; position: absolute; inset: 15px; background: var(--bg-color); border-radius: 50%;
+        }
+
+        /* 步骤 3: 热力图 */
+        .ui-step-3 .abs-globe {
+            background: radial-gradient(circle at 40% 40%, var(--accent-cyan), var(--accent-purple) 70%, transparent);
+            opacity: 0.8;
+            filter: blur(2px);
+        }
+        .ui-step-3 .hud-top {
+            position: absolute; top: 10%; padding: 8px 16px; font-size: 0.8rem; border-radius: 20px; background: rgba(0,0,0,0.5); border: 1px solid var(--glass-border);
+        }
+        .ui-step-3 .legend {
+            position: absolute; bottom: 15%; left: 15%; width: 100px; height: 8px; border-radius: 4px;
+            background: linear-gradient(to right, var(--glass-border), var(--accent-cyan), var(--accent-purple));
+        }
+
+        /* 步骤 4: 播放器 */
+        .ui-step-4 .player-bar {
+            position: absolute; bottom: 10%; width: 80%; padding: 16px; display: flex; align-items: center; gap: 16px; border-radius: 16px;
+        }
+        .ui-step-4 .play-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--accent-purple); display: flex; justify-content: center; align-items: center; }
+        .ui-step-4 .play-btn::after { content: ''; border-top: 6px solid transparent; border-bottom: 6px solid transparent; border-left: 10px solid #fff; margin-left: 4px; }
+        .ui-step-4 .eq { display: flex; gap: 3px; height: 16px; align-items: flex-end; }
+        .ui-step-4 .eq span { width: 3px; background: var(--success-green); border-radius: 2px; animation: eq-play 0.8s infinite ease-in-out; }
+        .ui-step-4 .eq span:nth-child(2) { animation-delay: 0.2s; }
+        .ui-step-4 .eq span:nth-child(3) { animation-delay: 0.4s; }
+
+        /* 步骤 5: 时间轴 */
+        .ui-step-5 .timeline {
+            position: absolute; bottom: 20%; width: 80%; height: 2px; background: var(--glass-border); display: flex; justify-content: space-between; align-items: center;
+        }
+        .ui-step-5 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
+        .ui-step-5 .dot.active { background: var(--accent-cyan); box-shadow: 0 0 10px var(--accent-cyan); transform: scale(1.5); }
+        .ui-step-5 .year-hud { position: absolute; font-size: 2rem; font-weight: 200; opacity: 0.5; }
+
+        /* 步骤 6: 搜索 */
+        .ui-step-6 .search-bar {
+            position: absolute; top: 15%; width: 70%; padding: 12px 20px; border-radius: 24px; display: flex; gap: 12px; align-items: center;
+        }
+        .ui-step-6 .search-icon { width: 14px; height: 14px; border: 2px solid var(--text-muted); border-radius: 50%; position: relative; }
+        .ui-step-6 .search-icon::after { content: ''; position: absolute; width: 6px; height: 2px; background: var(--text-muted); bottom: -4px; right: -4px; transform: rotate(45deg); }
+        .ui-step-6 .search-results { position: absolute; top: 35%; width: 70%; display: flex; flex-direction: column; gap: 8px; }
+
+        /* 步骤 7: 省级下钻 */
+        .ui-step-7 .china-map {
+            width: 70%; height: 70%; position: relative;
+        }
+        .ui-step-7 .poly {
+            position: absolute; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.02);
+            transition: all 0.3s;
+        }
+        .ui-step-7 .poly:hover { background: rgba(0, 210, 255, 0.2); border-color: var(--accent-cyan); }
+        /* 简易几何抽象拼图代表省份 */
+        .ui-step-7 .p1 { top: 20%; left: 30%; width: 30%; height: 20%; border-radius: 40% 20% 30% 10%; }
+        .ui-step-7 .p2 { top: 40%; left: 20%; width: 40%; height: 30%; border-radius: 10% 40% 20% 50%; }
+        .ui-step-7 .p3 { top: 35%; left: 60%; width: 25%; height: 40%; border-radius: 30% 10% 50% 20%; }
+        .ui-step-7 .btn-drill { position: absolute; bottom: 10%; padding: 10px 24px; border-radius: 20px; font-size: 0.8rem; }
+
+        /* 步骤 8: 快捷键 */
+        .ui-step-8 .keys { display: flex; gap: 24px; align-items: center; }
+        .ui-step-8 .key {
+            padding: 16px 24px; background: var(--bg-color); border: 1px solid var(--glass-border); border-radius: 8px;
+            box-shadow: 0 4px 0 var(--glass-border); font-family: monospace; font-size: 1.2rem;
+            transform: translateY(0); transition: 0.1s;
+        }
+        .ui-step-8 .key:active { transform: translateY(4px); box-shadow: 0 0 0 var(--glass-border); }
+        .ui-step-8 .space { width: 160px; }
+
+
+        /* ================= 数据来源区域 ================= */
+        .data-source-section {
+            padding: 120px 0;
+            border-top: 1px solid var(--glass-border);
+            margin-top: 40px;
+        }
+        
+        .section-header {
+            text-align: center;
+            margin-bottom: 80px;
+        }
+
+        .section-header h2 {
+            font-size: 2.5rem;
+            font-weight: 200;
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        .data-card {
+            padding: 32px;
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .data-card:hover {
+            transform: translateX(10px);
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .data-icon-wrap {
+            width: 56px;
+            height: 56px;
+            flex-shrink: 0;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .data-content h4 {
+            font-size: 1.15rem;
+            font-weight: 400;
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
+
+        .data-content p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* ================= 核心特点 ================= */
+        .features-section {
+            padding: 100px 0;
+            position: relative;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 24px;
+        }
+
+        .feature-card {
+            padding: 32px;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            color: var(--accent-cyan);
+            margin-bottom: 24px;
+            display: inline-block;
+        }
+
+        .feature-card h4 {
+            font-size: 1.2rem;
+            font-weight: 400;
+            margin-bottom: 12px;
+        }
+
+        .feature-card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            text-align: left;
+        }
+
+        /* ================= Footer & Call to Action ================= */
+        .footer {
+            padding: 100px 0 120px;
+            text-align: center;
+            border-top: 1px solid var(--glass-border);
+            margin-top: 80px;
+            position: relative;
+        }
+
+        /* 沉浸式毛玻璃体验按钮 */
+        .btn-experience {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 48px;
+            font-size: 1.15rem;
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 50px;
+            text-decoration: none;
+            letter-spacing: 0.2em;
+            font-weight: 300;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 悬停微光效果 */
+        .btn-experience:hover {
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.25);
+            color: #ffffff;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 
+                        0 0 20px rgba(0, 210, 255, 0.1);
+        }
+
+        /* 按钮悬停箭头动效 */
+        .btn-experience::after {
+            content: '→';
+            font-family: monospace;
+            font-size: 1.2em;
+            transition: transform 0.3s ease, color 0.3s ease;
+        }
+
+        .btn-experience:hover::after {
+            transform: translateX(6px);
+            color: var(--accent-cyan);
+        }
+
+        /* ================= 响应式 ================= */
+        @media (max-width: 900px) {
+            .step-grid {
+                grid-template-columns: 1fr;
+                gap: 40px;
+                text-align: center;
+            }
+            .step-text h2 { justify-content: center; }
+            .step-section { padding: 40px 0; min-height: auto; margin-bottom: 80px;}
+            .ui-canvas { width: 80%; margin: 0 auto; }
+        }
+        @media (max-width: 480px) {
+            .hero h1 { font-size: 2.5rem; }
+            .ui-canvas { width: 100%; }
+            .data-card { flex-direction: column; align-items: center; text-align: center; }
+            .btn-experience { padding: 14px 36px; font-size: 1.05rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-glow"></div>
+
+    <!-- Hero 区域 -->
+    <header class="hero container">
+        <div class="hero-globe reveal">
+            <svg viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="48" />
+                <g class="spin-group">
+                    <ellipse cx="50" cy="50" rx="20" ry="48" transform="rotate(0 50 50)" />
+                    <ellipse cx="50" cy="50" rx="20" ry="48" transform="rotate(60 50 50)" />
+                    <ellipse cx="50" cy="50" rx="20" ry="48" transform="rotate(120 50 50)" />
+                </g>
+                <path d="M 2 50 Q 50 70 98 50" fill="none" />
+                <path d="M 10 25 Q 50 40 90 25" fill="none" />
+                <path d="M 10 75 Q 50 60 90 75" fill="none" />
+            </svg>
+        </div>
+        <h1 class="reveal" style="transition-delay: 0.2s">Global Beats 3D</h1>
+        <p class="reveal" style="transition-delay: 0.4s">3D Music Trends · 交互式全球音乐数据可视化</p>
+    </header>
+
+    <main class="container">
+        
+        <!-- Step 1 -->
+        <section class="step-section">
+            <div class="step-grid">
+                <div class="step-text reveal">
+                    <h2>Step 1 / Intro</h2>
+                    <h3>沉浸式 3D 探索</h3>
+                    <p>打开网页，映入眼帘的是一个平滑自转的 3D 地球。半透明的玻璃态引导层温和地提示用户：「拖拽旋转，滚动缩放，点击探索」。4秒后自动淡出，将舞台完全留给数据与音乐。</p>
+                </div>
+                <div class="ui-canvas ui-step-1 reveal">
+                    <div class="abs-globe"></div>
+                    <div class="glass-panel guide-overlay">
+                        探索全球音乐<br><span style="opacity:0.5; font-size:0.8em">拖拽旋转 · 滚动缩放 · 点击探索</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 2 -->
+        <section class="step-section">
+            <div class="step-grid">
+                <div class="ui-canvas ui-step-2 reveal" style="order: 1">
+                    <div class="abs-globe"></div>
+                    <div class="glass-panel side-panel">
+                        <div class="ui-list-item"><div class="ui-cover"></div><div class="ui-lines"><div class="ui-line"></div><div class="ui-line short"></div></div></div>
+                        <div class="ui-list-item"><div class="ui-cover"></div><div class="ui-lines"><div class="ui-line"></div><div class="ui-line short"></div></div></div>
+                        <div class="ui-donut"></div>
+                    </div>
+                </div>
+                <div class="step-text reveal" style="order: 2">
+                    <h2>Step 2 / Data</h2>
+                    <h3>国家音乐排行榜</h3>
+                    <p>点击任意国家（如日本），地球停止自转并聚焦。右侧毛玻璃面板平滑滑入，呈现基于真实数据的 Top 5 热门歌曲、流媒体播放量柱状图以及音乐流派分布环形图。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 3 -->
+        <section class="step-section">
+            <div class="step-grid">
+                <div class="step-text reveal">
+                    <h2>Step 3 / Heatmap</h2>
+                    <h3>全球流行热力图</h3>
+                    <p>在面板中点击某首歌曲，D3.js 驱动的颜色插值引擎瞬间将地球切换为热力图模式。紫-青渐变直观反映该歌曲在各国的排名分布。顶部 HUD 实时显示状态，左下角图例辅助数据解读。</p>
+                </div>
+                <div class="ui-canvas ui-step-3 reveal">
+                    <div class="abs-globe"></div>
+                    <div class="glass-panel hud-top">正在显示《Shape of You》热力分布</div>
+                    <div class="legend"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 4 -->
+        <section class="step-section">
+            <div class="step-grid">
+                <div class="ui-canvas ui-step-4 reveal" style="order: 1">
+                    <div class="glass-panel player-bar">
+                        <div class="play-btn"></div>
+                        <div class="ui-lines" style="flex:1"><div class="ui-line"></div><div class="ui-line short"></div></div>
+                        <div class="eq"><span></span><span></span><span></span></div>
+                    </div>
+                </div>
+                <div class="step-text reveal" style="order: 2">
+                    <h2>Step 4 / Audio</h2>
+                    <h3>30 秒高潮试听</h3>
+                    <p>悬停歌曲封面点击播放，系统自动通过 iTunes Search API 检索该歌曲的 30 秒高潮音频。底部弹出精美的播放控件，伴随跳动的绿色音柱动画和 Toast 提示，带来所见即所听的闭环体验。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 5 -->
+        <section class="step-section">
+            <div class="step-grid">
+                <div class="step-text reveal">
+                    <h2>Step 5 / Timeline</h2>
+                    <h3>27 年时间穿越</h3>
+                    <p>底部精简的时间滑块覆盖了 2000 年至 2026 年按月粒度的历史数据。拖动滑块，地球材质与排行榜数据实时重绘，带你回顾过去近三十年间全球流行音乐的演变轨迹。</p>
+                </div>
+                <div class="ui-canvas ui-step-5 reveal">
+                    <div class="year-hud">2024.05</div>
+                    <div class="timeline">
+                        <div class="dot"></div><div class="dot"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 6 -->
+        <section class="step-section">
+            <div class="step-grid">
+                <div class="ui-canvas ui-step-6 reveal" style="order: 1">
+                    <div class="glass-panel search-bar">
+                        <div class="search-icon"></div>
+                        <div class="ui-line" style="margin:0; width:50%"></div>
+                    </div>
+                    <div class="search-results">
+                        <div class="glass-panel ui-list-item"><div class="ui-cover"></div><div class="ui-lines"><div class="ui-line"></div></div></div>
+                        <div class="glass-panel ui-list-item"><div class="ui-cover"></div><div class="ui-lines"><div class="ui-line"></div></div></div>
+                    </div>
+                </div>
+                <div class="step-text reveal" style="order: 2">
+                    <h2>Step 6 / Search</h2>
+                    <h3>全局实时搜索</h3>
+                    <p>内置全局搜索功能，输入歌手或歌曲名称，通过后端 Express 聚合接口实时检索。搜索结果支持一键播放试听，或直接在 3D 地球上生成该特定歌曲的全球热度图谱。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 7 -->
+        <section class="step-section">
+            <div class="step-grid">
+                <div class="step-text reveal">
+                    <h2>Step 7 / Drill-down</h2>
+                    <h3>中国省级数据钻取</h3>
+                    <p>点击中国版图，通过「进入省级视图」按钮，镜头平滑拉近，GeoJSON 多边形从国家级无缝切换至中国 34 个省级行政区。揭示从北京到四川差异化的地域音乐偏好。</p>
+                </div>
+                <div class="ui-canvas ui-step-7 reveal">
+                    <div class="china-map">
+                        <div class="poly p1"></div>
+                        <div class="poly p2"></div>
+                        <div class="poly p3"></div>
+                    </div>
+                    <div class="glass-panel btn-drill">返回全球视图</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 8 -->
+        <section class="step-section">
+            <div class="step-grid">
+                <div class="ui-canvas ui-step-8 reveal" style="order: 1">
+                    <div class="keys">
+                        <div class="key">ESC</div>
+                        <div class="key space">SPACE</div>
+                    </div>
+                </div>
+                <div class="step-text reveal" style="order: 2">
+                    <h2>Step 8 / Shortcuts</h2>
+                    <h3>极客快捷键支持</h3>
+                    <p>为提升桌面端体验，系统内置完善的键盘映射：按下 ESC 键可根据当前层级依次退出热力图、关闭侧边栏、返回全球视图；空格键全局控制音频的播放与暂停。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 全量数据来源区域 -->
+        <section class="data-source-section">
+            <div class="section-header reveal">
+                <h2>全景数据架构与来源</h2>
+                <p style="color: var(--text-muted); letter-spacing: 0.1em; margin-top: 16px;">真实、多维、海量的音乐数据支撑</p>
+            </div>
+            
+            <div class="data-grid">
+                <!-- 数据卡片 1 -->
+                <div class="glass-panel data-card reveal">
+                    <div class="data-icon-wrap">🇨🇳</div>
+                    <div class="data-content">
+                        <h4>中国区官方榜单</h4>
+                        <p>对接网易云音乐官方排行榜 API (NeteaseCloudMusicApi)，实时拉取热歌榜、飙升榜等 4 大官方权威核心数据。</p>
+                    </div>
+                </div>
+
+                <!-- 数据卡片 2 -->
+                <div class="glass-panel data-card reveal" style="transition-delay: 0.1s">
+                    <div class="data-icon-wrap">🌍</div>
+                    <div class="data-content">
+                        <h4>国际市场 RSS</h4>
+                        <p>直连 Apple Music / iTunes RSS Feed (免费开放接口无门槛)，全面覆盖并解析全球 33 个核心国家的 Top 50 流行指标。</p>
+                    </div>
+                </div>
+
+                <!-- 数据卡片 3 -->
+                <div class="glass-panel data-card reveal" style="transition-delay: 0.2s">
+                    <div class="data-icon-wrap">🗄️</div>
+                    <div class="data-content">
+                        <h4>27 年全量历史库</h4>
+                        <p>底层采用 SQLite (better-sqlite3) 本地化存储。跨越 2000-2026 共 27 年，收录 167 国按月切分的 38 万+ 条精密排名记录。</p>
+                    </div>
+                </div>
+
+                <!-- 数据卡片 4 -->
+                <div class="glass-panel data-card reveal" style="transition-delay: 0.3s">
+                    <div class="data-icon-wrap">🗺️</div>
+                    <div class="data-content">
+                        <h4>省级差异化算法</h4>
+                        <p>通过提取曲风流派及歌手的地区锚点标签，为中国 34 个省级行政区执行动态加权分配，还原高度本地化的地域听歌偏好。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 核心特点区域 -->
+        <section class="features-section">
+            <div class="section-header reveal">
+                <h2>项目核心技术特点</h2>
+            </div>
+            <div class="features-grid">
+                <!-- Card 1 -->
+                <div class="glass-panel feature-card reveal">
+                    <div class="feature-icon">📊</div>
+                    <h4>数据实时闭环</h4>
+                    <p>彻底告别 Mock 数据，前后端分离架构打通多端 API，构建了从检索、排行到试听的真实数据流转链路。</p>
+                </div>
+                <!-- Card 2 -->
+                <div class="glass-panel feature-card reveal" style="transition-delay: 0.1s">
+                    <div class="feature-icon">🌐</div>
+                    <h4>3D WebGL 引擎</h4>
+                    <p>基于 react-globe.gl 深度定制，自定义 GeoJSON 多边形着色、拔高算法与大气层散射光照模型。</p>
+                </div>
+                <!-- Card 3 -->
+                <div class="glass-panel feature-card reveal" style="transition-delay: 0.2s">
+                    <div class="feature-icon">🚀</div>
+                    <h4>SQLite WAL 模式</h4>
+                    <p>极简服务端架构，启用 WAL 预写日志模式，单文件 85MB 支撑百万级高频检索与高并发只读查询。</p>
+                </div>
+                <!-- Card 4 -->
+                <div class="glass-panel feature-card reveal" style="transition-delay: 0.3s">
+                    <div class="feature-icon">🎨</div>
+                    <h4>动态热力着色</h4>
+                    <p>集成 D3.js 颜色比例尺插值算法，将抽象排名数据实时映射为 3D 球体空间中的视觉热力梯度。</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 底部体验按钮 -->
+    <footer class="footer container reveal">
+        <a href="https://global-beats-3d.vercel.app" target="_blank" rel="noopener noreferrer" class="btn-experience">立即体验</a>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.15
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                    }
+                });
+            }, observerOptions);
+
+            const revealElements = document.querySelectorAll('.reveal');
+            revealElements.forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

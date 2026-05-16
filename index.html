@@ -377,50 +377,6 @@
             line-height: 1.6;
         }
 
-        /* ================= 核心特点 ================= */
-        .features-section {
-            padding: 100px 0;
-            position: relative;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 24px;
-        }
-
-        .feature-card {
-            padding: 32px;
-            transition: transform 0.3s ease, border-color 0.3s ease;
-            position: relative;
-            overflow: hidden;
-            text-align: center;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-5px);
-            border-color: rgba(255,255,255,0.2);
-        }
-
-        .feature-icon {
-            font-size: 2rem;
-            color: var(--accent-cyan);
-            margin-bottom: 24px;
-            display: inline-block;
-        }
-
-        .feature-card h4 {
-            font-size: 1.2rem;
-            font-weight: 400;
-            margin-bottom: 12px;
-        }
-
-        .feature-card p {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            text-align: left;
-        }
-
         /* ================= Footer & Call to Action ================= */
         .footer {
             padding: 100px 0 120px;
@@ -704,39 +660,6 @@
                         <h4>省级差异化算法</h4>
                         <p>通过提取曲风流派及歌手的地区锚点标签，为中国 34 个省级行政区执行动态加权分配，还原高度本地化的地域听歌偏好。</p>
                     </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 核心特点区域 -->
-        <section class="features-section">
-            <div class="section-header reveal">
-                <h2>项目核心技术特点</h2>
-            </div>
-            <div class="features-grid">
-                <!-- Card 1 -->
-                <div class="glass-panel feature-card reveal">
-                    <div class="feature-icon">📊</div>
-                    <h4>数据实时闭环</h4>
-                    <p>彻底告别 Mock 数据，前后端分离架构打通多端 API，构建了从检索、排行到试听的真实数据流转链路。</p>
-                </div>
-                <!-- Card 2 -->
-                <div class="glass-panel feature-card reveal" style="transition-delay: 0.1s">
-                    <div class="feature-icon">🌐</div>
-                    <h4>3D WebGL 引擎</h4>
-                    <p>基于 react-globe.gl 深度定制，自定义 GeoJSON 多边形着色、拔高算法与大气层散射光照模型。</p>
-                </div>
-                <!-- Card 3 -->
-                <div class="glass-panel feature-card reveal" style="transition-delay: 0.2s">
-                    <div class="feature-icon">🚀</div>
-                    <h4>SQLite WAL 模式</h4>
-                    <p>极简服务端架构，启用 WAL 预写日志模式，单文件 85MB 支撑百万级高频检索与高并发只读查询。</p>
-                </div>
-                <!-- Card 4 -->
-                <div class="glass-panel feature-card reveal" style="transition-delay: 0.3s">
-                    <div class="feature-icon">🎨</div>
-                    <h4>动态热力着色</h4>
-                    <p>集成 D3.js 颜色比例尺插值算法，将抽象排名数据实时映射为 3D 球体空间中的视觉热力梯度。</p>
                 </div>
             </div>
         </section>
